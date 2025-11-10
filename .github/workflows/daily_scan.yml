@@ -1,0 +1,5 @@
+on:
+  schedule:
+  # Run at 3:15 PM IST (9:45 AM UTC)
+  - cron: '45 9 * * 1-5'  # Mon-Fri
+  
