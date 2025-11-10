@@ -244,15 +244,23 @@ class DataFetcher:
             logger.info(f"Batch fetching daily data for {len(symbols)} stocks...")
 
             # Use yf.download for batch fetch - much faster!
-            df = yf.download(
-                symbols,
-                start=start_date,
-                end=end_date,
-                interval="1d",
-                group_by='ticker',
-                threads=True,
-                progress=False
-            )
+            import warnings
+            import logging
+
+            # Suppress yfinance logging
+            logging.getLogger('yfinance').setLevel(logging.CRITICAL)
+
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                df = yf.download(
+                    symbols,
+                    start=start_date,
+                    end=end_date,
+                    interval="1d",
+                    group_by='ticker',
+                    threads=True,
+                    progress=False
+                )
 
             results = {}
 
@@ -271,7 +279,6 @@ class DataFetcher:
                         results[symbol] = symbol_df
 
                 except (KeyError, AttributeError):
-                    logger.warning(f"No data for {symbol}")
                     continue
 
             logger.info(f"Successfully fetched data for {len(results)}/{len(symbols)} stocks")
@@ -293,16 +300,25 @@ class DataFetcher:
             logger.info(f"Batch fetching current data for {len(symbols)} stocks...")
 
             # Download 2 days of data to get current and previous close
-            df = yf.download(
-                symbols,
-                period="2d",
-                interval="1d",
-                group_by='ticker',
-                threads=True,
-                progress=False
-            )
+            import warnings
+            import logging
+
+            # Suppress yfinance logging
+            logging.getLogger('yfinance').setLevel(logging.CRITICAL)
+
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                df = yf.download(
+                    symbols,
+                    period="2d",
+                    interval="1d",
+                    group_by='ticker',
+                    threads=True,
+                    progress=False
+                )
 
             results = {}
+            failed_symbols = []
 
             for symbol in symbols:
                 try:
@@ -312,6 +328,7 @@ class DataFetcher:
                         symbol_df = df[symbol].copy()
 
                     if symbol_df.empty or len(symbol_df) < 1:
+                        failed_symbols.append(symbol)
                         continue
 
                     # Get latest data
@@ -337,10 +354,13 @@ class DataFetcher:
                     }
 
                 except (KeyError, AttributeError, IndexError) as e:
-                    logger.warning(f"Error processing {symbol}: {e}")
+                    failed_symbols.append(symbol)
                     continue
 
             logger.info(f"Successfully fetched current data for {len(results)}/{len(symbols)} stocks")
+            if failed_symbols and len(failed_symbols) < 50:  # Only log if reasonable number
+                logger.debug(f"Failed to fetch: {', '.join([s.replace('.NS', '') for s in failed_symbols[:10]])}{' ...' if len(failed_symbols) > 10 else ''}")
+
             return results
 
         except Exception as e:
@@ -370,6 +390,10 @@ class DataFetcher:
 
             for symbol in batch:
                 try:
+                    # Suppress yfinance error logging
+                    import logging
+                    logging.getLogger('yfinance').setLevel(logging.CRITICAL)
+
                     ticker = yf.Ticker(symbol)
                     info = ticker.info
 
@@ -384,16 +408,16 @@ class DataFetcher:
                     }
 
                     # Small delay between API calls
-                    time.sleep(0.1)
+                    time.sleep(0.5)
 
                 except Exception as e:
-                    logger.warning(f"Error fetching fundamentals for {symbol}: {e}")
+                    # Silently handle errors - provide default values
                     results[symbol] = {'sector': 'Unknown', 'market_cap': 0, 'pe_ratio': 0, 'debt_to_equity': 0, 'roe': 0, 'industry': 'Unknown'}
                     continue
 
             # Delay between batches
             if i + batch_size < total:
-                time.sleep(1.0)
+                time.sleep(2.0)
 
         logger.info(f"Fetched fundamentals for {len(results)}/{total} stocks")
         return results
