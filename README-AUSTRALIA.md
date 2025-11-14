@@ -94,17 +94,6 @@ This module extends the Indian stock scanner to support the Australian Securitie
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### Key Differences from Indian Scanner
-| Stage | Indian Market | Australian Market |
-|-------|---------------|-------------------|
-| Universe | Nifty 500 (503) | ASX 200 (200) |
-| RSI Range | 40-60 (tighter) | 35-65 (wider) |
-| Momentum Filter | MA alignment | 52W high proximity (85-98%) |
-| Sector Logic | Preference only | Weighted multipliers (0.8-1.2x) |
-| D/E Threshold | <0.5 (strict) | <1.0 (lenient) |
-| ROE Threshold | >15% | >10% |
-| Expected Output | 5-15 stocks | 5-15 stocks |
-
 ## Features
 
 - **ASX 200 Coverage**: Scans top 200 Australian stocks by market capitalization
@@ -216,18 +205,6 @@ Results are saved to `data/results/australia/swing_scan_YYYYMMDD.csv` with colum
 - ROE_%, Debt_Equity
 - Target, Stop_Loss, Score, Sector_Weight
 
-## Differences from Indian Scanner
-
-| Feature | Indian Market | Australian Market |
-|---------|---------------|-------------------|
-| Scan Type | BTST + Swing | Swing only |
-| Market Cap | ₹5000 Cr min | A$500M min |
-| ROE Filter | 15% min | 10% min |
-| D/E Filter | 0.5 max | 1.0 max |
-| RSI Range | 40-60 | 35-65 |
-| Sector Weights | Preferences only | Multiplier applied |
-| Timing | 3:15 PM IST | 4:15 PM AEST |
-| Universe | Nifty 500 | ASX 200 |
 
 ## Strategy Notes
 

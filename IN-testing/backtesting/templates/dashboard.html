@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backtest Results Dashboard - Indian Strategies</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f5f5f5; color: #333; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+
+        /* Header */
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px; margin-bottom: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        .header p { opacity: 0.9; }
+
+        /* Tabs */
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab { padding: 15px 30px; background: white; border-radius: 8px 8px 0 0; cursor: pointer; transition: all 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .tab.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .tab:hover { transform: translateY(-2px); }
+
+        /* Cards */
+        .card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 25px; }
+        .card h2 { color: #667eea; border-bottom: 3px solid #667eea; padding-bottom: 10px; margin-bottom: 20px; }
+
+        /* Grid */
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+        .metric-card { background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #667eea; }
+        .metric-card h4 { color: #555; font-size: 0.9em; text-transform: uppercase; margin-bottom: 10px; }
+        .metric-value { font-size: 1.8em; font-weight: bold; color: #333; }
+        .metric-diff { font-size: 0.9em; font-weight: bold; margin-top: 5px; }
+        .positive { color: #28a745; }
+        .negative { color: #dc3545; }
+
+        /* Recommendation Badge */
+        .recommendation { display: inline-block; padding: 8px 16px; border-radius: 20px; font-weight: bold; text-transform: uppercase; }
+        .rec-use_v2 { background: #28a745; color: white; }
+        .rec-use_v1 { background: #ffc107; color: #333; }
+        .rec-inconclusive { background: #6c757d; color: white; }
+        .conf-high { border: 3px solid #28a745; }
+        .conf-medium { border: 3px solid #ffc107; }
+        .conf-low { border: 3px solid #dc3545; }
+
+        /* Table */
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th { background: #667eea; color: white; padding: 12px; text-align: left; }
+        td { padding: 10px 12px; border-bottom: 1px solid #ddd; }
+        tr:hover { background-color: #f8f9fa; }
+
+        /* Loading */
+        .loading { text-align: center; padding: 50px; color: #666; }
+        .hidden { display: none; }
+
+        /* Footer */
+        .footer { text-align: center; padding: 20px; color: #666; margin-top: 30px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Backtest Results Dashboard</h1>
+            <p>Indian Market - Swing & BTST Strategy Comparison</p>
+            <p id="last-updated"></p>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('swing')">Swing Strategy</div>
+            <div class="tab" onclick="showTab('btst')">BTST Strategy</div>
+            <div class="tab" onclick="showTab('overview')">Overview</div>
+        </div>
+
+        <!-- Overview Tab -->
+        <div id="overview-content" class="tab-content hidden">
+            <div class="card">
+                <h2>Current Recommendations</h2>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <h4>Swing Strategy</h4>
+                        <div id="swing-overview"></div>
+                    </div>
+                    <div class="metric-card">
+                        <h4>BTST Strategy</h4>
+                        <div id="btst-overview"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Swing Tab -->
+        <div id="swing-content" class="tab-content">
+            <div class="card">
+                <h2>Latest Comparison</h2>
+                <div id="swing-latest" class="loading">Loading...</div>
+            </div>
+
+            <div class="card">
+                <h2>30-Day Trend</h2>
+                <div id="swing-trend" class="loading">Loading...</div>
+            </div>
+
+            <div class="card">
+                <h2>Performance Comparison</h2>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <h4>v1 (Current)</h4>
+                        <div id="swing-v1-perf"></div>
+                    </div>
+                    <div class="metric-card">
+                        <h4>v2 (Enhanced)</h4>
+                        <div id="swing-v2-perf"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Historical Results</h2>
+                <div id="swing-history"></div>
+            </div>
+        </div>
+
+        <!-- BTST Tab -->
+        <div id="btst-content" class="tab-content hidden">
+            <div class="card">
+                <h2>Latest Comparison</h2>
+                <div id="btst-latest" class="loading">Loading...</div>
+            </div>
+
+            <div class="card">
+                <h2>30-Day Trend</h2>
+                <div id="btst-trend" class="loading">Loading...</div>
+            </div>
+
+            <div class="card">
+                <h2>Performance Comparison</h2>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <h4>v1 (Current)</h4>
+                        <div id="btst-v1-perf"></div>
+                    </div>
+                    <div class="metric-card">
+                        <h4>v2 (Enhanced)</h4>
+                        <div id="btst-v2-perf"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Historical Results</h2>
+                <div id="btst-history"></div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Nifty 500 Backtesting Framework - Results Dashboard</p>
+            <p>Auto-refreshes every 60 seconds</p>
+        </div>
+    </div>
+
+    <script>
+        let currentTab = 'swing';
+
+        function showTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+
+            event.target.classList.add('active');
+            document.getElementById(tab + '-content').classList.remove('hidden');
+        }
+
+        function formatRecommendation(rec, conf) {
+            const recText = rec === 'use_v2' ? 'Use v2' : rec === 'use_v1' ? 'Use v1' : 'Inconclusive';
+            return `<span class="recommendation rec-${rec} conf-${conf}">${recText} (${conf} confidence)</span>`;
+        }
+
+        function loadOverview() {
+            fetch('/api/overview')
+                .then(r => r.json())
+                .then(data => {
+                    ['swing', 'btst'].forEach(strategy => {
+                        const el = document.getElementById(strategy + '-overview');
+                        if (data[strategy]) {
+                            const d = data[strategy];
+                            el.innerHTML = `
+                                ${formatRecommendation(d.recommendation, d.confidence_level)}
+                                <div class="metric-value ${d.delta_avg_return > 0 ? 'positive' : 'negative'}">
+                                    ${d.delta_avg_return > 0 ? '+' : ''}${d.delta_avg_return}% return
+                                </div>
+                                <div class="metric-diff">Criteria: ${d.criteria_met}/${d.total_criteria}</div>
+                                <div class="metric-diff">Last updated: ${d.run_date}</div>
+                            `;
+                        } else {
+                            el.innerHTML = '<p>No data available</p>';
+                        }
+                    });
+                });
+        }
+
+        function loadTrend(strategy) {
+            fetch(`/api/trend/${strategy}`)
+                .then(r => r.json())
+                .then(data => {
+                    const el = document.getElementById(strategy + '-trend');
+                    if (data.length === 0) {
+                        el.innerHTML = '<p>No trend data available</p>';
+                        return;
+                    }
+
+                    let html = '<table><thead><tr><th>Date</th><th>Recommendation</th><th>Criteria</th><th>Avg Return Delta</th><th>Sharpe Delta</th></tr></thead><tbody>';
+                    data.forEach(d => {
+                        html += `<tr>
+                            <td>${d.date}</td>
+                            <td>${formatRecommendation(d.recommendation, d.confidence)}</td>
+                            <td>${d.criteria_met}/${d.total_criteria}</td>
+                            <td class="${d.delta_avg_return > 0 ? 'positive' : 'negative'}">${d.delta_avg_return > 0 ? '+' : ''}${d.delta_avg_return}%</td>
+                            <td class="${d.delta_sharpe_ratio > 0 ? 'positive' : 'negative'}">${d.delta_sharpe_ratio > 0 ? '+' : ''}${d.delta_sharpe_ratio}</td>
+                        </tr>`;
+                    });
+                    html += '</tbody></table>';
+                    el.innerHTML = html;
+                });
+        }
+
+        function loadPerformance(strategy, version) {
+            fetch(`/api/performance/${strategy}/${version}`)
+                .then(r => r.json())
+                .then(data => {
+                    const el = document.getElementById(`${strategy}-${version}-perf`);
+                    if (!data) {
+                        el.innerHTML = '<p>No data available</p>';
+                        return;
+                    }
+                    el.innerHTML = `
+                        <div class="metric-value">${data.total_trades} trades</div>
+                        <div class="metric-diff">Win Rate: ${data.win_rate}%</div>
+                        <div class="metric-diff">Avg Return: ${data.avg_return}%</div>
+                        <div class="metric-diff">Sharpe: ${data.sharpe_ratio}</div>
+                        <div class="metric-diff">Max DD: ${data.max_drawdown}%</div>
+                        <div class="metric-diff">Avg Hold: ${data.avg_hold_days} days</div>
+                    `;
+                });
+        }
+
+        function loadHistory(strategy) {
+            fetch(`/api/history/${strategy}`)
+                .then(r => r.json())
+                .then(data => {
+                    const el = document.getElementById(strategy + '-history');
+                    if (data.length === 0) {
+                        el.innerHTML = '<p>No history available</p>';
+                        return;
+                    }
+
+                    let html = '<table><thead><tr><th>Date</th><th>Recommendation</th><th>Criteria</th><th>Trades</th><th>Win Rate</th><th>Avg Return</th><th>Sharpe</th></tr></thead><tbody>';
+                    data.forEach(d => {
+                        html += `<tr>
+                            <td>${d.date}</td>
+                            <td>${formatRecommendation(d.recommendation, d.confidence)}</td>
+                            <td>${d.criteria_met}</td>
+                            <td>${d.delta_trades > 0 ? '+' : ''}${d.delta_trades}</td>
+                            <td class="${d.delta_win_rate > 0 ? 'positive' : 'negative'}">${d.delta_win_rate > 0 ? '+' : ''}${d.delta_win_rate}%</td>
+                            <td class="${d.delta_avg_return > 0 ? 'positive' : 'negative'}">${d.delta_avg_return > 0 ? '+' : ''}${d.delta_avg_return}%</td>
+                            <td class="${d.delta_sharpe > 0 ? 'positive' : 'negative'}">${d.delta_sharpe > 0 ? '+' : ''}${d.delta_sharpe}</td>
+                        </tr>`;
+                    });
+                    html += '</tbody></table>';
+                    el.innerHTML = html;
+                });
+        }
+
+        function loadAllData() {
+            loadOverview();
+            ['swing', 'btst'].forEach(strategy => {
+                loadTrend(strategy);
+                loadPerformance(strategy, 'v1');
+                loadPerformance(strategy, 'v2');
+                loadHistory(strategy);
+            });
+            document.getElementById('last-updated').textContent = `Last updated: ${new Date().toLocaleString()}`;
+        }
+
+        // Initial load
+        loadAllData();
+
+        // Auto-refresh every 60 seconds
+        setInterval(loadAllData, 60000);
+    </script>
+</body>
+</html>
