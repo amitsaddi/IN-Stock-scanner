@@ -28,6 +28,13 @@ ENV/
 env/
 .venv
 stockScannerIN/
+backtest_v*
+btst_backtest_v*
+swing_backtest_v*
+comparison_*
+*.bak
+*.old
+*.db
 
 # IDEs
 .vscode/
