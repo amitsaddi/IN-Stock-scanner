@@ -21,6 +21,7 @@ wheels/
 *.egg
 MANIFEST
 
+
 # Virtual Environments
 venv/
 ENV/
@@ -47,6 +48,12 @@ Thumbs.db
 data/results/
 *.csv
 !requirements.txt
+*.db
+
 
 # Logs
 *.log
+results/
+comparison_reports/
+*.bak
+*.old
